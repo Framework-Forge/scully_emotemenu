@@ -13,7 +13,7 @@ function utils.filterTable(_table, keep)
                 _table[_index] = _table[i]
                 _table[i] = nil
             end
-            _index += 1
+            _index = _index + 1
         else
             _table[i] = nil
         end
@@ -22,15 +22,16 @@ function utils.filterTable(_table, keep)
     return _table
 end
 
-if lib.context == 'client' then
+if pr_lib.context == 'client' then
     ---Display a notification
     ---@param _type string
     ---@param message string
     function utils.notify(_type, message)
-        lib.notify({
+        pr_lib.Notify({
             title = locale('emote_menu'),
             description = message,
             type = _type,
+            position = "center-left",
             duration = 3000
         })
     end
@@ -44,14 +45,14 @@ if lib.context == 'client' then
         TriggerEvent('chat:addSuggestion', '/' .. commandName, properties.help, properties.params)
     end
 
-    local mpPeds = { `mp_m_freemode_01`, `mp_f_freemode_01` }
+    local mpPeds = { joaat('mp_m_freemode_01'), joaat('mp_f_freemode_01') }
     
     ---@param ped number
     ---@return boolean
     function utils.isPedMale(ped)
         local model = GetEntityModel(ped)
 
-        if lib.table.contains(mpPeds, model) then
+        if pr_lib.table.contains(mpPeds, model) then
             return model == mpPeds[1]
         end
         
@@ -63,7 +64,7 @@ else
     ---@param _type string
     ---@param message string
     function utils.notify(source, _type, message)
-        lib.notify(source, {
+        pr_lib.notify.Notify(source, {
             title = locale('emote_menu'),
             description = message,
             type = _type,

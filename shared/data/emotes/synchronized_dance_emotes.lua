@@ -1,7 +1,7 @@
 local options = {}
-local emotes = lib.load('shared.data.emotes.dance_emotes')
+local emotes = pr_lib.load('shared.data.emotes.dance_emotes')
 
-emotes = lib.table.deepclone(emotes)
+emotes = pr_lib.table.deepclone(emotes)
 
 for i = 1, #emotes.options do
     local emote = emotes.options[i]
@@ -16,8 +16,7 @@ for i = 1, #emotes.options do
 end
 
 return {
-    name = locale('synchronized_dance_emotes'),
-    type = 'synchronized_dance_emotes',
+    name = 'Synchronized Dance Emotes',
     icon = 'fa-solid fa-people-pulling',
     options = options
 }

@@ -1,7 +1,16 @@
-# Walk Style
+# walkstyle — Forge cache
 
-Get the players current walk style
+Este caminho foi mantido para compatibilidade documental. A versão Forge não usa mais state bags para esta chave. Consulte o [guia de migração e exports](../FORGE_CACHE_MIGRATION.md).
+
+Leitura no cliente:
+
 ```lua
-local playerState = LocalPlayer.state
-local walkstyle = playerState.walkstyle
+local value = exports.scully_emotemenu:getEmoteState('walkstyle')
+```
+
+Leitura no servidor:
+
+```lua
+local state = exports.scully_emotemenu:getPlayerEmoteState(source)
+local value = state and state.walkstyle
 ```

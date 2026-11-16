@@ -1,7 +1,16 @@
-# In Synchronized Emote
+# inSynchronizedEmote — Forge cache
 
-Check if the player is in a synchronized emote
+Este caminho foi mantido para compatibilidade documental. A versão Forge não usa mais state bags para esta chave. Consulte o [guia de migração e exports](../FORGE_CACHE_MIGRATION.md).
+
+Leitura no cliente:
+
 ```lua
-local playerState = LocalPlayer.state
-local inSynchronizedEmote = playerState.inSynchronizedEmote -- This returns the server ID of the other player
+local value = exports.scully_emotemenu:getEmoteState('inSynchronizedEmote')
+```
+
+Leitura no servidor:
+
+```lua
+local state = exports.scully_emotemenu:getPlayerEmoteState(source)
+local value = state and state.inSynchronizedEmote
 ```

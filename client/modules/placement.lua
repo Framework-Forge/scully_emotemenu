@@ -7,31 +7,31 @@ local placement = {}
 function placement.finish(location, heading, data)
     if DoesEntityExist(placement.ped) then DeleteEntity(placement.ped) end
 
-    lib.hideTextUI()
-    TaskGoToCoordAnyMeans(cache.ped, location.x, location.y, location.z, 1.0, 0, false, 786603, 0xbf800000)
+    pr_lib.hideTextUI()
+    TaskGoToCoordAnyMeans(pr_lib.cache.ped, location.x, location.y, location.z, 1.0, 0, false, 786603, 0xbf800000)
 
-    local coords = GetEntityCoords(cache.ped)
+    local coords = GetEntityCoords(pr_lib.cache.ped)
 
-    lib.showTextUI(locale('right_click_to_cancel'))
+    pr_lib.showTextUI(locale('right_click_to_cancel'))
 
     while #(coords - location) > 1.5 do
         Wait(0)
 
-        coords = GetEntityCoords(cache.ped)
+        coords = GetEntityCoords(pr_lib.cache.ped)
 
         if IsControlJustPressed(0, 177) then
-            lib.hideTextUI()
-            ClearPedTasks(cache.ped)
+            pr_lib.hideTextUI()
+            ClearPedTasks(pr_lib.cache.ped)
 
             location = vec3(0)
             break
         end
     end
 
-    lib.hideTextUI()
+    pr_lib.hideTextUI()
 
     if location ~= vec3(0) then
-        SetEntityCoords(cache.ped, location.x, location.y, location.z, false, false, false, false)
+        SetEntityCoords(pr_lib.cache.ped, location.x, location.y, location.z, false, false, false, false)
 
         data.Advanced = {
             Coords = location,
@@ -47,7 +47,7 @@ end
 function placement.start(data)
     if placement.ped and DoesEntityExist(placement.ped) then return end
 
-    placement.ped = ClonePed(cache.ped, false, false, true)
+    placement.ped = ClonePed(pr_lib.cache.ped, false, false, true)
 
     FreezeEntityPosition(placement.ped, true)
     SetEntityAlpha(placement.ped, 0, false)
@@ -62,7 +62,7 @@ function placement.start(data)
         animationName = animationName[randomIndex]
     end
 
-    local isValid = lib.requestAnimDict(dictionaryName)
+    local isValid = pr_lib.requestAnimDict(dictionaryName)
 
     if not isValid then
         Utils.notify('error', locale('not_valid_emote'))
@@ -107,10 +107,10 @@ function placement.start(data)
                     bone = prop.Bone,
                     placement = prop.Placement,
                     variant = prop.Variant,
-                    hasPtfx = options?.Ptfx?.AttachToProp
+                    hasPtfx = (options and options.Ptfx and options.Ptfx.AttachToProp)
                 }
 
-                lib.requestModel(placementProp.hash)
+                pr_lib.requestModel(placementProp.hash)
 
                 local placementCoords = GetEntityCoords(placement.ped)
                 local object = CreateObject(placementProp.hash, placementCoords.x, placementCoords.y, placementCoords.z, false, false, false)
@@ -130,10 +130,10 @@ function placement.start(data)
     TaskPlayAnim(placement.ped, dictionaryName, animationName, 2.0, 2.0, duration or -1, movementFlag, 0, false, false, false)
     RemoveAnimDict(dictionaryName)
 
-    local secondaryEmote = options?.SecondaryEmote
+    local secondaryEmote = (options and options.SecondaryEmote)
 
     if secondaryEmote then
-        local isSecondaryValid = lib.requestAnimDict(secondaryEmote.Dictionary, 1000)
+        local isSecondaryValid = pr_lib.requestAnimDict(secondaryEmote.Dictionary, 1000)
 
         if not isSecondaryValid then
             Utils.notify('error', locale('not_valid_emote'))
@@ -150,9 +150,9 @@ function placement.start(data)
     SetBlockingOfNonTemporaryEvents(placement.ped, true)
 
     local currentCoords = nil
-    local heading = GetEntityHeading(cache.ped) + 90.0
+    local heading = GetEntityHeading(pr_lib.cache.ped) + 90.0
 
-    lib.showTextUI(locale('placement_text'))
+    pr_lib.showTextUI(locale('placement_text'))
 
     CreateThread(function()
         local offsetZ = 0.0
@@ -160,7 +160,7 @@ function placement.start(data)
 
         CreateThread(function()
             while DoesEntityExist(placement.ped) do
-                hit, _, endCoords = lib.raycast.cam(511, 7)
+                hit, _, endCoords = pr_lib.raycast.cam(511, 7)
                 Wait(5)
             end
         end)
@@ -178,36 +178,36 @@ function placement.start(data)
             end
 
             if IsDisabledControlJustPressed(0, 14) then
-                heading += 5
+                heading = heading + 5
 
                 if heading > 360 then heading = 0.0 end
             elseif IsDisabledControlJustPressed(0, 15) then
-                heading -= 5
+                heading = heading - 5
 
                 if heading < 0 then heading = 360.0 end
             elseif IsDisabledControlPressed(0, 27) then
-                offsetZ += 0.01
+                offsetZ = offsetZ + 0.01
 
                 if offsetZ > 1.0 then offsetZ = 1.0 end
             elseif IsDisabledControlPressed(0, 173) then
-                offsetZ -= 0.01
+                offsetZ = offsetZ - 0.01
 
                 if offsetZ < -1.0 then offsetZ = -1.0 end
             end
 
             if IsControlJustPressed(0, 201) then
-                local coords = GetEntityCoords(cache.ped)
+                local coords = GetEntityCoords(pr_lib.cache.ped)
                 local distance = #(coords - currentCoords)
 
                 if distance < 5.0 then
-                    placement.finish(GetEntityCoords(placement.ped), GetEntityHeading(placement.ped), lib.table.deepclone(data))
+                    placement.finish(GetEntityCoords(placement.ped), GetEntityHeading(placement.ped), pr_lib.table.deepclone(data))
                 else
                     Utils.notify('error', locale('too_far'))
                 end
             elseif IsControlJustPressed(0, 177) then
                 if DoesEntityExist(placement.ped) then DeleteEntity(placement.ped) end
 
-                lib.hideTextUI()
+                pr_lib.hideTextUI()
             end
         end
 

@@ -3,7 +3,7 @@ local SetPedToRagdoll = SetPedToRagdoll
 
 local isRagdoll = false
 
-lib.addKeybind({
+pr_lib.addKeybind({
     name = 'ragdollKey',
     description = locale('ragdoll'),
     defaultKey = Config.ragdollKey,
@@ -20,8 +20,8 @@ lib.addKeybind({
                 break
             end
 
-            if IsPedOnFoot(cache.ped) then
-                SetPedToRagdoll(cache.ped, 1000, 1000, 0, true, true, false)
+            if IsPedOnFoot(pr_lib.cache.ped) then
+                SetPedToRagdoll(pr_lib.cache.ped, 1000, 1000, 0, true, true, false)
             end
         end
     end

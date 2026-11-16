@@ -1,6 +1,5 @@
 return {
-    name = locale('synchronized_emotes'),
-    type = 'synchronized_emotes',
+    name = 'Synchronized Emotes',
     icon = 'fa-solid fa-people-carry',
     options = {
         {
@@ -23,6 +22,36 @@ return {
             Options = {
                 Shared = {
                     OtherEmote = 'sbaseball',
+                },
+            },
+            Synchronized = true
+        },
+        {
+            Label = 'Cuddle',
+            Command = 'scuddle',
+            Animation = 'cuddlepartner1_clip',
+            Dictionary = 'cuddlepartner1@pawuk',
+            Options = {
+                Flags = {
+                    Loop = true,
+                },
+                Shared = {
+                    OtherEmote = 'scuddle2',
+                },
+            },
+            Synchronized = true
+        },
+        {
+            Label = 'Cuddle 2',
+            Command = 'scuddle2',
+            Animation = 'cuddlepartner2_clip',
+            Dictionary = 'cuddlepartner2@pawuk',
+            Options = {
+                Flags = {
+                    Loop = true,
+                },
+                Shared = {
+                    OtherEmote = 'scuddle',
                 },
             },
             Synchronized = true

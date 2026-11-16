@@ -1,112 +1,336 @@
-local mainMenuOptions = {
-    { label = locale('emote_options'), description = locale('open_emote_options'), icon = 'fa-solid fa-person', args = { id = 'emotemenu_submenu_emotes' } },
-    { label = locale('walking_styles'), icon = 'fa-solid fa-person-walking', values = {}, args = { id = 'emotemenu_walks', walks = Walks }, close = false },
-    { label = locale('scenarios'), icon = 'fa-solid fa-person-walking-with-cane', values = {}, args = { id = 'emotemenu_scenarios', scenarios = Scenarios }, close = false },
-    { label = locale('facial_expressions'), icon = 'fa-solid fa-face-angry', values = {}, args = { id = 'emotemenu_expressions', expressions = Expressions }, close = false },
-    { label = locale('cancel'), values = {
-        { label = locale('emote'), description = locale('cancel_your_emote') },
-        { label = locale('walk_style'), description = locale('reset_walk_style') },
-        { label = locale('expression'), description = locale('reset_your_expression') },
-        { label = locale('all'), description = locale('cancel_reset_everything') }
-    }, icon = 'fa-solid fa-ban', args = { id = 'emotemenu_cancel' }, close = false }
-}
-
-local preview = require 'client.modules.preview'
+local preview = pr_lib.load('client.modules.preview')
 
 ---Close the emote menu
 function CloseMenu()
-    local currentMenu = lib.getOpenMenu()
+    local currentMenu = pr_lib.getOpenContextMenu()
 
     if not currentMenu or not string.find(currentMenu, 'emotemenu_') then return end
 
-    lib.hideMenu()
+    pr_lib.hideContext()
 end
 exports('closeMenu', CloseMenu)
 
 ---Toggle the emote menu
 function ToggleMenu()
-    if PlayerState.isLimited or IsPauseMenuActive() then return end
+    if PlayerState.isLimited then return end
 
-    local currentMenu = lib.getOpenMenu()
+    local currentMenu = pr_lib.getOpenContextMenu()
 
     if not currentMenu then
-        lib.showMenu('emotemenu_main_menu')
+        pr_lib.showContext('emotemenu_main_menu')
     else
         CloseMenu()
     end
 end
 exports('toggleMenu', ToggleMenu)
 
----Register the emote menu
-function RegisterMenu()
-    for i = 1, #mainMenuOptions do
-        local option = mainMenuOptions[i]
-        local data = option.args
+local function openBindsContext()
+    local bindMenuOptions = {}
 
-        if data.id == 'emotemenu_walks' then
-            local command = Config.walkCommands[1]
+    for i = 1, 5 do
+        local emote = EmoteBinds[tostring(i)]
+        if emote then
+            bindMenuOptions[i] = {
+                title = ("%d. %s"):format(i, emote.Label),
+                description = locale('delete_bind'),
+                icon = 'keyboard',
+                onSelect = function()
+                    EmoteBinds[tostring(i)] = nil
+                    KVP.update('keybinds', EmoteBinds)
+                    Utils.notify('success', locale('bind_deleted'))
+                    openBindsContext()
+                end
+            }
+        else
+            bindMenuOptions[i] = {
+                title = ("%d. %s"):format(i, locale('none')),
+                description = locale('new_bind'),
+                icon = 'keyboard',
+                onSelect = function()
+                    local query = pr_lib.inputDialog(locale('new_bind'), { locale('emote_command_to_bind') })
+                    if not query or not query[1] or query[1] == "" then
+                        pr_lib.showContext('emotemenu_submenu_binds')
+                        return
+                    end
 
-            for k = 1, #data.walks do
-                local walk = data.walks[k]
+                    local commandInput = string.lower(query[1])
+                    local bindEmote
 
-                option.values[k] = { label = walk.Label, description = ('/%s %s'):format(command, walk.Command) }
-            end
-        elseif data.id == 'emotemenu_scenarios' then
-            local command = Config.emoteCommands[1]
+                    for catIdx = 1, #Emotes do
+                        local category = Emotes[catIdx]
+                        for optIdx = 1, #category.options do
+                            local e = category.options[optIdx]
+                            if e.Command == commandInput then
+                                bindEmote = e
+                                break
+                            end
+                        end
+                        if bindEmote then break end
+                    end
 
-            for k = 1, #data.scenarios do
-                local scenario = data.scenarios[k]
+                    if not bindEmote then
+                        Utils.notify('error', locale('not_valid_emote'))
+                        openBindsContext()
+                        return
+                    end
 
-                option.values[k] = { label = scenario.Label, description = ('/%s %s'):format(command, scenario.Command) }
-            end
-        elseif data.id == 'emotemenu_expressions' then
-            local command = Config.expressionCommands[1]
+                    if bindEmote.BlockBinding then
+                        Utils.notify('error', locale('bind_blocked'))
+                        openBindsContext()
+                        return
+                    end
 
-            for k = 1, #data.expressions do
-                local expression = data.expressions[k]
-
-                option.values[k] = { label = expression.Label, description = ('/%s %s'):format(command, expression.Command) }
-            end
+                    EmoteBinds[tostring(i)] = bindEmote
+                    KVP.update('keybinds', EmoteBinds)
+                    Utils.notify('success', locale('bind_saved'))
+                    openBindsContext()
+                end
+            }
         end
     end
 
-    local emoteMenuOptions = {
-        { label = locale('search'), description = locale('search_for_emotes'), icon = 'fa-solid fa-magnifying-glass', args = { id = 'emotemenu_search' } }
+    pr_lib.registerContext({
+        id = 'emotemenu_submenu_binds',
+        title = locale('keybinds'),
+        menu = 'emotemenu_submenu_emotes',
+        options = bindMenuOptions
+    })
+
+    pr_lib.showContext('emotemenu_submenu_binds')
+end
+
+---Register the emote menu
+function RegisterMenu()
+    -- Submenu: Walking Styles
+    local walkOptions = {}
+    local walkCmd = Config.walkCommands[1] or 'walk'
+    for k = 1, #Walks do
+        local walk = Walks[k]
+        walkOptions[#walkOptions + 1] = {
+            title = walk.Label,
+            description = ('/%s %s'):format(walkCmd, walk.Command),
+            icon = 'person-walking',
+            onSelect = function()
+                SetWalk(walk.Walk)
+            end
+        }
+    end
+    pr_lib.registerContext({
+        id = 'emotemenu_walks',
+        title = locale('walking_styles'),
+        menu = 'emotemenu_main_menu',
+        options = walkOptions
+    })
+
+    -- Submenu: Scenarios
+    local scenarioOptions = {}
+    local emoteCmd = Config.emoteCommands[1] or 'e'
+    for k = 1, #Scenarios do
+        local scenario = Scenarios[k]
+        scenarioOptions[#scenarioOptions + 1] = {
+            title = scenario.Label,
+            description = ('/%s %s'):format(emoteCmd, scenario.Command),
+            icon = 'person-walking-with-cane',
+            onSelect = function()
+                PlayEmote(scenario)
+            end
+        }
+    end
+    pr_lib.registerContext({
+        id = 'emotemenu_scenarios',
+        title = locale('scenarios'),
+        menu = 'emotemenu_main_menu',
+        options = scenarioOptions
+    })
+
+    -- Submenu: Expressions
+    local expressionOptions = {}
+    local exprCmd = Config.expressionCommands[1] or 'mood'
+    for k = 1, #Expressions do
+        local expression = Expressions[k]
+        expressionOptions[#expressionOptions + 1] = {
+            title = expression.Label,
+            description = ('/%s %s'):format(exprCmd, expression.Command),
+            icon = 'face-angry',
+            onSelect = function()
+                SetExpression(expression.Expression)
+            end
+        }
+    end
+    pr_lib.registerContext({
+        id = 'emotemenu_expressions',
+        title = locale('facial_expressions'),
+        menu = 'emotemenu_main_menu',
+        options = expressionOptions
+    })
+
+    -- Submenu: Cancel
+    pr_lib.registerContext({
+        id = 'emotemenu_cancel',
+        title = locale('cancel'),
+        menu = 'emotemenu_main_menu',
+        options = {
+            {
+                title = locale('emote'),
+                description = locale('cancel_your_emote'),
+                icon = 'ban',
+                onSelect = CancelEmote
+            },
+            {
+                title = locale('walk_style'),
+                description = locale('reset_walk_style'),
+                icon = 'ban',
+                onSelect = ResetWalk
+            },
+            {
+                title = locale('expression'),
+                description = locale('reset_your_expression'),
+                icon = 'ban',
+                onSelect = ResetExpression
+            },
+            {
+                title = locale('all'),
+                description = locale('cancel_reset_everything'),
+                icon = 'ban',
+                onSelect = function()
+                    CancelEmote()
+                    ResetWalk()
+                    ResetExpression()
+                end
+            }
+        }
+    })
+
+    -- Main Menu Options
+    local mainMenuOptions = {
+        { title = locale('emote_options'), description = locale('open_emote_options'), icon = 'person', menu = 'emotemenu_submenu_emotes', arrow = true },
+        { title = locale('walking_styles'), icon = 'person-walking', menu = 'emotemenu_walks', arrow = true },
+        { title = locale('scenarios'), icon = 'person-walking-with-cane', menu = 'emotemenu_scenarios', arrow = true },
+        { title = locale('facial_expressions'), icon = 'face-angry', menu = 'emotemenu_expressions', arrow = true },
+        { title = locale('cancel'), icon = 'ban', menu = 'emotemenu_cancel', arrow = true }
     }
 
-    if Config.enableEmoteBinds then
-        emoteMenuOptions[2] = { label = locale('keybinds'), description = locale('create_delete_binds'), icon = 'fa-solid fa-keyboard', args = { id = 'emotemenu_submenu_binds' } }
-    end
+    pr_lib.registerContext({
+        id = 'emotemenu_main_menu',
+        title = locale('emote_menu'),
+        position = Config.menuPosition,
+        options = mainMenuOptions
+    })
 
+    -- Filter Emotes
     Emotes = Utils.filterTable(Emotes, function(tbl, index)
         local option = tbl[index]
         local keepOption = true
 
-        if option?.type == 'consumable_emotes' and not Config.enableConsumableEmotes then
+        if option.name == 'Consumable Emotes' and not Config.enableConsumableEmotes then
             keepOption = false
-        elseif option?.type == 'synchronized_emotes' and not Config.enableSynchronizedEmotes then
+        elseif option.name == 'Synchronized Emotes' and not Config.enableSynchronizedEmotes then
             keepOption = false
-        elseif option?.type == 'synchronized_dance_emotes' and not Config.enableSynchronizedEmotes then
+        elseif option.name == 'Synchronized Dance Emotes' and not Config.enableSynchronizedEmotes then
             keepOption = false
-        elseif option?.type == 'animal_emotes' and not Config.enableAnimalEmotes then
+        elseif option.name == 'Animal Emotes' and not Config.enableAnimalEmotes then
             keepOption = false
         end
 
         return keepOption
     end)
 
-    for i = 1, #Emotes do
-        local submenu = Emotes[i]
+    local emoteCategoryOptions = {
+        {
+            title = locale('search'),
+            description = locale('search_for_emotes'),
+            icon = 'magnifying-glass',
+            onSelect = function()
+                local query = pr_lib.inputDialog(locale('search'), { locale('emote') })
 
-        submenu.options = Utils.filterTable(submenu.options, function(tbl, index)
+                if not query or not query[1] or query[1] == "" then
+                    pr_lib.showContext('emotemenu_submenu_emotes')
+                    return
+                end
+
+                local searchTerm = string.lower(query[1])
+                local searchResultsOptions = {}
+
+                for i = 1, #Emotes do
+                    local category = Emotes[i]
+                    local foundCategoryOptions = {}
+
+                    for k = 1, #category.options do
+                        local emote = category.options[k]
+
+                        if not emote.Hide and (string.find(string.lower(emote.Label), searchTerm) or string.find(string.lower(emote.Command), searchTerm)) then
+                            foundCategoryOptions[#foundCategoryOptions + 1] = {
+                                title = emote.Label,
+                                description = ('/%s %s'):format(emoteCmd, emote.Command),
+                                onSelect = function()
+                                    if Config.enableEmotePreview and IsControlPressed(0, 38) then
+                                        preview.showEmote(emote)
+                                        return
+                                    end
+                                    PlayEmote(emote)
+                                end
+                            }
+                        end
+                    end
+
+                    if #foundCategoryOptions > 0 then
+                        local searchCatId = 'emotemenu_search_cat_' .. i
+                        pr_lib.registerContext({
+                            id = searchCatId,
+                            title = category.name,
+                            menu = 'emotemenu_submenu_emotes_search',
+                            options = foundCategoryOptions
+                        })
+
+                        searchResultsOptions[#searchResultsOptions + 1] = {
+                            title = category.name,
+                            icon = category.icon or 'person',
+                            menu = searchCatId,
+                            arrow = true
+                        }
+                    end
+                end
+
+                if #searchResultsOptions == 0 then
+                    Utils.notify('error', locale('not_valid_emote'))
+                    pr_lib.showContext('emotemenu_submenu_emotes')
+                    return
+                end
+
+                pr_lib.registerContext({
+                    id = 'emotemenu_submenu_emotes_search',
+                    title = locale('search_results'),
+                    menu = 'emotemenu_submenu_emotes',
+                    options = searchResultsOptions
+                })
+
+                pr_lib.showContext('emotemenu_submenu_emotes_search')
+            end
+        }
+    }
+
+    if Config.enableEmoteBinds then
+        emoteCategoryOptions[#emoteCategoryOptions + 1] = {
+            title = locale('keybinds'),
+            description = locale('create_delete_binds'),
+            icon = 'keyboard',
+            onSelect = function()
+                openBindsContext()
+            end
+        }
+    end
+
+    for i = 1, #Emotes do
+        local category = Emotes[i]
+
+        category.options = Utils.filterTable(category.options, function(tbl, index)
             local emote = tbl[index]
             local keepEmote = true
 
             if not DoesAnimDictExist(emote.Dictionary) then
                 keepEmote = false
-            elseif emote?.Options?.Props then
+            elseif (emote and emote.Options and emote.Options.Props) then
                 local props = emote.Options.Props
-
                 for k = 1, #props do
                     if not IsModelValid(joaat(props[k].Name)) then
                         keepEmote = false
@@ -126,265 +350,115 @@ function RegisterMenu()
             return keepEmote
         end)
 
-        local emotes = {}
-        local emoteOptions = {}
+        local categoryEmoteOptions = {}
 
-        for k = 1, #submenu.options do
-            local emote = submenu.options[k]
+        for k = 1, #category.options do
+            local emote = category.options[k]
 
             if not emote.Hide then
-                local index = #emotes + 1
-                local command = Config.emoteCommands[1]
-
-                emotes[index] = emote
-                emoteOptions[index] = { label = emote.Label, description = ('/%s %s - %s'):format(command, emote.Command, locale('hold_to_preview') .. (emote.CanGroupEmote and locale('hold_to_group_emote') or '')) }
+                categoryEmoteOptions[#categoryEmoteOptions + 1] = {
+                    title = emote.Label,
+                    description = ('/%s %s - %s'):format(emoteCmd, emote.Command, locale('hold_to_preview')),
+                    onSelect = function()
+                        if Config.enableEmotePreview and IsControlPressed(0, 38) then
+                            preview.showEmote(emote)
+                            return
+                        end
+                        PlayEmote(emote)
+                    end
+                }
             end
         end
 
-        emoteMenuOptions[#emoteMenuOptions + 1] = { label = submenu.name, icon = submenu.icon, values = emoteOptions, args = { id = 'emotemenu_play_emote', emotes = emotes }, close = false }
+        local categoryMenuId = 'emotemenu_cat_' .. i
+        pr_lib.registerContext({
+            id = categoryMenuId,
+            title = category.name,
+            menu = 'emotemenu_submenu_emotes',
+            options = categoryEmoteOptions
+        })
+
+        emoteCategoryOptions[#emoteCategoryOptions + 1] = {
+            title = category.name,
+            icon = category.icon or 'person',
+            menu = categoryMenuId,
+            arrow = true
+        }
     end
 
-    lib.registerMenu({
+    pr_lib.registerContext({
         id = 'emotemenu_submenu_emotes',
         title = locale('emote_options'),
-        position = Config.menuPosition,
-        options = emoteMenuOptions,
-        onClose = function()
-            lib.showMenu('emotemenu_main_menu')
-        end,
-    }, function(_, scrollIndex, args)
-        if args.id == 'emotemenu_search' then
-            local query = lib.inputDialog(locale('search'), { locale('emote') })
-
-            if not query then
-                lib.showMenu('emotemenu_submenu_emotes')
-                return
-            end
-
-            query = string.lower(query[1])
-
-            local searchMenuOptions = {}
-
-            for i = 1, #Emotes do
-                local submenu = Emotes[i]
-                local emotes = {}
-                local foundEmotes = {}
-                
-                for k = 1, #submenu.options do
-                    local emote = submenu.options[k]
-
-                    if not emote.Hide and (string.find(string.lower(emote.Label), query) or string.find(string.lower(emote.Command), query)) then
-                        local index = #emotes + 1
-                        local command = Config.emoteCommands[1]
-
-                        emotes[index] = emote
-                        foundEmotes[index] = { label = emote.Label, description = ('/%s %s - %s'):format(command, emote.Command, locale('hold_to_preview') .. (emote.CanGroupEmote and locale('hold_to_group_emote') or '')) }
-                    end
-                end
-
-                if #foundEmotes > 0 then
-                    searchMenuOptions[#searchMenuOptions + 1] = { label = submenu.name, icon = submenu.icon, values = foundEmotes, args = { id = 'emotemenu_play_emote', emotes = emotes }, close = false }
-                end
-            end
-
-            if #searchMenuOptions == 0 then
-                lib.showMenu('emotemenu_submenu_emotes')
-                Utils.notify('error', locale('not_valid_emote'))
-                return
-            end
-
-            lib.registerMenu({
-                id = 'emotemenu_submenu_emotes_search',
-                title = locale('search_results'),
-                position = Config.menuPosition,
-                options = searchMenuOptions,
-                onClose = function()
-                    lib.showMenu('emotemenu_submenu_emotes')
-                end,
-            }, function(_, scrollIndex, args)
-                if Config.enableEmotePreview and IsControlPressed(0, 38) then
-                    preview.showEmote(args.emotes[scrollIndex])
-                    return
-                end
-
-                PlayEmote(args.emotes[scrollIndex])
-            end)
-
-            lib.showMenu('emotemenu_submenu_emotes_search')
-        elseif args.id == 'emotemenu_submenu_binds' then
-            local bindMenuOptions = {
-                { label = locale('none'), description = locale('new_bind'), icon = 'fa-solid fa-1', args = { id = 'emotemenu_submenu_binds_new' } },
-                { label = locale('none'), description = locale('new_bind'), icon = 'fa-solid fa-2', args = { id = 'emotemenu_submenu_binds_new' } },
-                { label = locale('none'), description = locale('new_bind'), icon = 'fa-solid fa-3', args = { id = 'emotemenu_submenu_binds_new' } },
-                { label = locale('none'), description = locale('new_bind'), icon = 'fa-solid fa-4', args = { id = 'emotemenu_submenu_binds_new' } },
-                { label = locale('none'), description = locale('new_bind'), icon = 'fa-solid fa-5', args = { id = 'emotemenu_submenu_binds_new' } }
-            }
-
-            for index, emote in pairs(EmoteBinds) do
-                if emote then
-                    bindMenuOptions[tonumber(index)] = { label = emote.Label, description = locale('delete_bind'), icon = ('fa-solid fa-%s'):format(index), args = { id = 'emotemenu_submenu_binds_delete' } }
-                end
-            end
-
-            lib.registerMenu({
-                id = 'emotemenu_submenu_binds',
-                title = locale('keybinds'),
-                position = Config.menuPosition,
-                options = bindMenuOptions,
-                onClose = function()
-                    lib.showMenu('emotemenu_submenu_emotes')
-                end,
-            }, function(selected, _, args)
-                if PlayerState.isLimited then return end
-
-                if args.id == 'emotemenu_submenu_binds_new' then
-                    local query = lib.inputDialog(locale('new_bind'), { locale('emote_command_to_bind') })
-                    
-                    if not query then
-                        lib.showMenu('emotemenu_submenu_binds')
-                        return
-                    end
-
-                    query = string.lower(query[1])
-
-                    local bindEmote
-
-                    for i = 1, #Emotes do
-                        local emotes = Emotes[i]
-            
-                        for k = 1, #emotes.options do
-                            local emote = emotes.options[k]
-            
-                            if emote.Command == query then
-                                bindEmote = emote
-                                break
-                            end
-                        end
-            
-                        if bindEmote then break end
-                    end
-
-                    if not bindEmote then
-                        lib.showMenu('emotemenu_submenu_binds')
-                        Utils.notify('error', locale('not_valid_emote'))
-                        return
-                    end
-
-                    if bindEmote.BlockBinding then
-                        Utils.notify('error', locale('bind_blocked'))
-                        return
-                    end
-
-                    EmoteBinds[tostring(selected)] = bindEmote
-
-                    KVP.update('keybinds', EmoteBinds)
-                    Utils.notify('success', locale('bind_saved'))
-                else
-                    EmoteBinds[tostring(selected)] = nil
-
-                    KVP.update('keybinds', EmoteBinds)
-                    Utils.notify('success', locale('bind_deleted'))
-                end
-            end)
-
-            lib.showMenu('emotemenu_submenu_binds')
-        else
-            if Config.enableEmotePreview and IsControlPressed(0, 38) then
-                preview.showEmote(args.emotes[scrollIndex])
-                return
-            end
-
-            PlayEmote(args.emotes[scrollIndex])
-        end
-    end)
-
-    lib.registerMenu({
-        id = 'emotemenu_main_menu',
-        title = locale('emote_menu'),
-        position = Config.menuPosition,
-        options = mainMenuOptions,
-    }, function(_, scrollIndex, args)
-        if args.id == 'emotemenu_submenu_emotes' then
-            lib.showMenu('emotemenu_submenu_emotes')
-        elseif args.id == 'emotemenu_walks' then
-            SetWalk(args.walks[scrollIndex].Walk)
-        elseif args.id == 'emotemenu_scenarios' then
-            PlayEmote(args.scenarios[scrollIndex])
-        elseif args.id == 'emotemenu_expressions' then
-            SetExpression(args.expressions[scrollIndex].Expression)
-        elseif args.id == 'emotemenu_cancel' then
-            if scrollIndex == 1 then
-                CancelEmote()
-            elseif scrollIndex == 2 then
-                ResetWalk()
-            elseif scrollIndex == 3 then
-                ResetExpression()
-            elseif scrollIndex == 4 then
-                CancelEmote()
-                ResetWalk()
-                ResetExpression()
-            end
-        end
-    end)
+        menu = 'emotemenu_main_menu',
+        options = emoteCategoryOptions
+    })
 end
 
 ---Register the radial menu
 function RegisterRadialMenu()
-    for i = 1, #mainMenuOptions do
-        local option = mainMenuOptions[i]
-        local isWalks = option.args.id == 'emotemenu_walks'
-        local isExpressions = option.args.id == 'emotemenu_expressions'
-
-        if isWalks or isExpressions then
-            local radialOptions = {
-                {
-                    label = locale('view_list'),
-                    icon = 'list',
-                    onSelect = function()
-                        CreateList(option.label, isWalks and Walks or Expressions, isWalks and Config.walkCommands[1] or Config.expressionCommands[1])
-                    end
-                },
-                {
-                    label = locale('cancel'),
-                    icon = 'ban',
-                    onSelect = isWalks and ResetWalk or ResetExpression
-                }
-            }
-
-            if isWalks then
-                for k = 1, #Walks do
-                    local walk = Walks[k]
-    
-                    radialOptions[#radialOptions + 1] = {
-                        label = walk.Label,
-                        icon = 'person-walking',
-                        onSelect = function()
-                            SetWalk(walk.Walk)
-                        end
-                    }
-                end
-            elseif isExpressions then
-                for k = 1, #Expressions do
-                    local expression = Expressions[k]
-    
-                    radialOptions[#radialOptions + 1] = {
-                        label = expression.Label,
-                        icon = 'face-angry',
-                        onSelect = function()
-                            SetExpression(expression.Expression)
-                        end
-                    }
-                end
+    local radialWalksOptions = {
+        {
+            label = locale('view_list'),
+            icon = 'list',
+            onSelect = function()
+                pr_lib.showContext('emotemenu_walks')
             end
+        },
+        {
+            label = locale('cancel'),
+            icon = 'ban',
+            onSelect = ResetWalk
+        }
+    }
 
-            lib.registerRadial({
-                id = option.args.id,
-                items = radialOptions
-            })
-        end
+    for k = 1, #Walks do
+        local walk = Walks[k]
+        radialWalksOptions[#radialWalksOptions + 1] = {
+            label = walk.Label,
+            icon = 'person-walking',
+            onSelect = function()
+                SetWalk(walk.Walk)
+            end
+        }
     end
 
-    lib.registerRadial({
+    pr_lib.registerRadial({
+        id = 'emotemenu_walks',
+        items = radialWalksOptions
+    })
+
+    local radialExpressionsOptions = {
+        {
+            label = locale('view_list'),
+            icon = 'list',
+            onSelect = function()
+                pr_lib.showContext('emotemenu_expressions')
+            end
+        },
+        {
+            label = locale('cancel'),
+            icon = 'ban',
+            onSelect = ResetExpression
+        }
+    }
+
+    for k = 1, #Expressions do
+        local expression = Expressions[k]
+        radialExpressionsOptions[#radialExpressionsOptions + 1] = {
+            label = expression.Label,
+            icon = 'face-angry',
+            onSelect = function()
+                SetExpression(expression.Expression)
+            end
+        }
+    end
+
+    pr_lib.registerRadial({
+        id = 'emotemenu_expressions',
+        items = radialExpressionsOptions
+    })
+
+    pr_lib.registerRadial({
         id = 'emotemenu_main',
         items = {
             {
@@ -414,7 +488,7 @@ function RegisterRadialMenu()
         }
     })
 
-    lib.addRadialItem({{
+    pr_lib.addRadialItem({{
         id = 'emotemenu_open',
         label = locale('emote_menu'),
         icon = 'person-walking',
@@ -446,7 +520,7 @@ end
 
 CreateThread(function()
     Wait(1000)
-    
+
     RegisterMenu()
 
     if Config.enableRadialMenu then

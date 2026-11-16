@@ -5,22 +5,16 @@ game 'gta5'
 
 name 'scully_emotemenu'
 author 'https://discord.gg/scully'
-version '2.1.0'
-repository 'https://github.com/Scullyy/scully_emotemenu'
-description 'An emote menu for the FiveM community.'
+version '2.0.9'
 
 dependencies {
     '/server:7290',
     '/onesync',
-    'ox_lib'
-}
-
-ox_libs {
-    'locale'
+    'pr_bridge'
 }
 
 shared_scripts {
-    '@ox_lib/init.lua'
+    '@pr_bridge/init.lua'
 }
 
 client_scripts {
@@ -29,7 +23,7 @@ client_scripts {
 }
 
 server_scripts {
-    'server/version_check.lua',
+    'server/state.lua',
     'server/main.lua'
 }
 
@@ -48,6 +42,8 @@ files {
     'shared/data/emotes/synchronized_emotes.lua',
     'shared/data/emotes/exit_emotes.lua',
     'shared/modules/utils.lua',
+    'shared/modules/emote_state.lua',
+    'client/modules/state.lua',
     'client/data/ped_types.lua',
     'client/data/scenario_models.lua',
     'client/modules/handsup.lua',
@@ -59,20 +55,20 @@ files {
     'client/modules/stance.lua'
 }
 
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_foodpack.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_prop_torch_fire001.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[Natty3d]/natty_props_lollipops.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[Scully]/scully_props.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[Sam]/badges.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[SMGMissy]/lilflags_ytyp.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[SMGMissy]/prideprops_ytyp.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_food_icecream_pack.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_effect_cigarpack.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_murderpack.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_animal_fish002.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_food_dessert_a.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_prop_give_gift.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_package_pizzahut.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[Ultrahacx]/ultra_ringcase.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[BzZzi]/bzzz_food_xmas22.ytyp'
-data_file 'DLC_ITYP_REQUEST' 'stream/[Props]/[EP]/pprp_icefishing.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_foodpack.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_prop_torch_fire001.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'natty_props_lollipops.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'scully_props.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'badges.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'lilflags_ytyp.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'prideprops_ytyp.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_food_icecream_pack.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_effect_cigarpack.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_murderpack.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_animal_fish002.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_food_dessert_a.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_prop_give_gift.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_package_pizzahut.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'ultra_ringcase.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'bzzz_food_xmas22.ytyp'
+data_file 'DLC_ITYP_REQUEST' 'pprp_icefishing.ytyp'

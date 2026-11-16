@@ -1,7 +1,16 @@
-# Is In Emote
+# isInEmote — Forge cache
 
-Check if the player is in an emote
+Este caminho foi mantido para compatibilidade documental. A versão Forge não usa mais state bags para esta chave. Consulte o [guia de migração e exports](../FORGE_CACHE_MIGRATION.md).
+
+Leitura no cliente:
+
 ```lua
-local playerState = LocalPlayer.state
-local isInEmote = playerState.isInEmote
+local value = exports.scully_emotemenu:getEmoteState('isInEmote')
+```
+
+Leitura no servidor:
+
+```lua
+local state = exports.scully_emotemenu:getPlayerEmoteState(source)
+local value = state and state.isInEmote
 ```

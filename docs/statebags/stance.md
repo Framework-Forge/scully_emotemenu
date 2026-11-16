@@ -1,15 +1,18 @@
-# Stance
+# stance — Forge cache
 
-Set or check the players stance mode
+Este caminho foi mantido para compatibilidade documental. A versão Forge não usa mais state bags para esta chave. Consulte o [guia de migração e exports](../FORGE_CACHE_MIGRATION.md).
+
+Leitura no cliente:
+
 ```lua
-local playerState = LocalPlayer.state
--- Set Stance
-playerState.stance = 0 -- Set Normal Stance
-playerState.stance = 1 -- Set Stealth Stance
-playerState.stance = 2 -- Set Crouch Stance
-
--- Check Stance
-local isInNormalStance = playerState.stance == 0
-local isInStealthStance = playerState.stance == 1
-local isInCrouchStance = playerState.stance == 2
+local value = exports.scully_emotemenu:getEmoteState('stance')
 ```
+
+Leitura no servidor:
+
+```lua
+local state = exports.scully_emotemenu:getPlayerEmoteState(source)
+local value = state and state.stance
+```
+
+No cliente: `setEmoteStance(0)` normal, `setEmoteStance(1)` furtivo e `setEmoteStance(2)` agachado.

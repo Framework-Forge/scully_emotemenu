@@ -19,15 +19,15 @@ function preview.createPreviewPed(previewModel)
     local ped
 
     if previewModel then
-        local coords = GetEntityCoords(cache.ped)
+        local coords = GetEntityCoords(pr_lib.cache.ped)
 
-        lib.requestModel(previewModel)
+        pr_lib.requestModel(previewModel)
 
         ped = CreatePed(0, previewModel, coords.x, coords.y, coords.z, 0.0, false, false)
 
         SetModelAsNoLongerNeeded(previewModel)
     else
-        ped = ClonePed(cache.ped, false, false, true)
+        ped = ClonePed(pr_lib.cache.ped, false, false, true)
     end
 
     SetEntityCollision(ped, false, true)
@@ -56,7 +56,7 @@ function preview.createPreviewPed(previewModel)
             local previewCoords = vec3(0.0, 0.0, 0.0)
 
             for i = 1, #buffers do
-                previewCoords += buffers[i]
+                previewCoords = previewCoords + buffers[i]
             end
 
             previewCoords = previewCoords / #buffers
@@ -85,7 +85,7 @@ function preview.showEmote(data)
 
     if not preview.id then preview.id = 0 end
 
-    preview.id += 1
+    preview.id = preview.id + 1
 
     local previewId = preview.id
 
@@ -102,7 +102,7 @@ function preview.showEmote(data)
         animationName = animationName[randomIndex]
     end
 
-    local isValid = lib.requestAnimDict(dictionaryName)
+    local isValid = pr_lib.requestAnimDict(dictionaryName)
 
     if not isValid then
         Utils.notify('error', locale('not_valid_emote'))
@@ -146,10 +146,10 @@ function preview.showEmote(data)
                     bone = prop.Bone,
                     placement = prop.Placement,
                     variant = prop.Variant,
-                    hasPtfx = options?.Ptfx?.AttachToProp
+                    hasPtfx = (options and options.Ptfx and options.Ptfx.AttachToProp)
                 }
 
-                lib.requestModel(previewProp.hash)
+                pr_lib.requestModel(previewProp.hash)
 
                 local previewCoords = GetEntityCoords(preview.ped)
                 local object = CreateObject(previewProp.hash, previewCoords.x, previewCoords.y, previewCoords.z, false, false, false)
@@ -170,10 +170,10 @@ function preview.showEmote(data)
     TaskPlayAnim(preview.ped, dictionaryName, animationName, 2.0, 2.0, duration or -1, movementFlag, 0, false, false, false)
     RemoveAnimDict(dictionaryName)
 
-    local secondaryEmote = options?.SecondaryEmote
+    local secondaryEmote = (options and options.SecondaryEmote)
 
     if secondaryEmote then
-        local isSecondaryValid = lib.requestAnimDict(secondaryEmote.Dictionary, 1000)
+        local isSecondaryValid = pr_lib.requestAnimDict(secondaryEmote.Dictionary, 1000)
 
         if not isSecondaryValid then
             Utils.notify('error', locale('not_valid_emote'))

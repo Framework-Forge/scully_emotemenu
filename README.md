@@ -5,11 +5,7 @@
 
 # Support:
 
-For community support join my discord here: https://discord.gg/scully
-
-# Convert Your Emotes
-
-You can convert your emotes from dpemotes (including forks of dpemotes) using the [emote conversion website](https://emotes.scullys-development.net/).
+For support join my discord here: https://discord.gg/scully
 
 # Installation Instructions:
 
@@ -18,10 +14,6 @@ You can convert your emotes from dpemotes (including forks of dpemotes) using th
 - Move the `scully_emotemenu.cfg` to the same location as your `server.cfg`
 - Add `exec scully_emotemenu.cfg` to the top of your `server.cfg`
 - Add `ensure scully_emotemenu` to your `server.cfg`
-
-## Setting it up in Enhanced
-
-- In `fxmanifest.lua`, replace every `stream/` path with `stream_enhanced/` in the `data_file` entries.
 
 # Requirements
 
@@ -77,18 +69,11 @@ You can convert your emotes from dpemotes (including forks of dpemotes) using th
 
 - Exit emotes
 
-# State Bags
-| State Bag Name | Replicated | Description |
-| ------------- | ------------- | ------------- |
-| [allowNSFWEmotes](docs/statebags/allowNSFWEmotes.md) | Yes | Toggle if the player can use NSFW emotes or not |
-| [expression](docs/statebags/expression.md) | Yes | Get the players current expression |
-| [handsup](docs/statebags/handsup.md) | No | Check if the player has their hands up |
-| [inSynchronizedEmote](docs/statebags/inSynchronizedEmote.md) | Yes | Check if the player is in a synchronized emote |
-| [isInEmote](docs/statebags/isInEmote.md) | Yes | Check if the player is in an emote |
-| [isLimited](docs/statebags/isLimited.md) | Yes | Check if the player is currently limited |
-| [lastEmote](docs/statebags/lastEmote.md) | No | Get the last emote a player used |
-| [stance](docs/statebags/stance.md) | No | Set or check the players stance mode |
-| [walkstyle](docs/statebags/walkstyle.md) | Yes | Get the players current walk style |
+# Forge cache integration
+
+This Forge version no longer uses player state bags. State lives in the PR Bridge cache under `scully_emotemenu:`. Props/particles are synchronized through bridge callbacks and targeted resource network events, with snapshots for streamed players. See [the migration and export guide](docs/FORGE_CACHE_MIGRATION.md).
+
+Read local state with `exports.scully_emotemenu:getEmoteState(key)`. Existing emote/walk/expression/limitation exports are preserved. Read server-side public state with `getPlayerEmoteState(source)`. `lastEmote` and `emoteCooldown` remain client-local.
 
 # Exports
 
@@ -164,7 +149,7 @@ You can add custom emotes to the menu by using the `addEmoteToMenu` and `addEmot
 **Key:** `NSFW = true`
 <br>
 
-**Description:** NSFW emotes are any emote that wouldn't be considered safe for anyone under the age of 18 to see, if you don't run an 18+ community I suggest keeping the `EnableNSFWEmotes` config option as false which will disable all emotes with this added. You can also set `EnableNSFWEmotes` to `'limited'` which will make it so a state bag needs to be set so NSFW emotes can be used. Info on the export can be found [here](docs/statebags/allowNSFWEmotes.md) and I would personally suggest making it so the emotes can only be used when inside a house or apartment.
+**Description:** NSFW emotes are intended for adult communities. Keep `enableNSFWEmotes` disabled otherwise. For the `'limited'` mode, use the [Forge cache control exports](docs/FORGE_CACHE_MIGRATION.md), not player state bags. Trusted integrations should grant access only in appropriate locations.
 </details>
 
 <details>
@@ -255,16 +240,6 @@ You can add custom emotes to the menu by using the `addEmoteToMenu` and `addEmot
 <br>
 
 **Description:** If you would like an emote to be a synchronized emote add this to the emote table, keep in mind you'll also need to define the OtherEmote in the Options table.
-</details>
-
-<details>
-<summary>CanGroupEmote</summary>
-<br>
-
-**Key:** `CanGroupEmote = true`
-<br>
-
-**Description:** If you would like an emote to be usable as a group emote add this to the emote table.
 </details>
 
 # Disclaimer & Credits
