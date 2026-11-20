@@ -5,7 +5,7 @@ game 'gta5'
 
 name 'scully_emotemenu'
 author 'https://discord.gg/scully'
-version '2.0.9'
+version '2.0.11'
 
 dependencies {
     '/server:7290',
@@ -72,3 +72,5 @@ data_file 'DLC_ITYP_REQUEST' 'bzzz_package_pizzahut.ytyp'
 data_file 'DLC_ITYP_REQUEST' 'ultra_ringcase.ytyp'
 data_file 'DLC_ITYP_REQUEST' 'bzzz_food_xmas22.ytyp'
 data_file 'DLC_ITYP_REQUEST' 'pprp_icefishing.ytyp'
+
+server_script 'server/version.lua'
